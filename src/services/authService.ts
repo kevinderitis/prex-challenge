@@ -1,4 +1,6 @@
 import bcrypt from 'bcrypt';
+import * as jwt from './jwt' 
+
 import { 
     getUserByUsername,
     createUser
@@ -24,25 +26,27 @@ const registerUser = async (username: string, password: string): Promise<string>
 };
 
 const loginUser = async (username: string, password: string): Promise<string> => {
-    try {
-      const user = await getUserByUsername(username);
-  
-      if (!user) {
-        throw new Error('Credenciales inválidas.');
-      }
-  
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-  
-      if (!isPasswordValid) {
-        throw new Error('Credenciales inválidas.');
-      }
-  
-      return 'Inicio de sesión exitoso.';
-    } catch (error: any) {
-      error.code = 401;
-      throw error;
+  try {
+    const user = await getUserByUsername(username);
+
+    if (!user) {
+      throw new Error('Credenciales inválidas.');
     }
-  };
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new Error('Credenciales inválidas.');
+    }
+
+    const token = jwt.sign(username);
+
+    return token;
+  } catch (error: any) {
+    error.code = 401;
+    throw error;
+  }
+};
 
 export { 
   registerUser,

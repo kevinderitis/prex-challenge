@@ -30,7 +30,7 @@ const register = async (req: Request, res: Response) => {
       const result = await loginUser(username, password);
 
       res.json({ message: result });
-    } catch (error: any) {
+    } catch (error: any) { // resolver error codes
       console.error(error);
       res.status(error.code).json({ error: error.message });
     }
