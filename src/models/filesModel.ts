@@ -2,7 +2,7 @@ import { Schema, model, Document, Types } from 'mongoose';
 
 interface IFile extends Document {
   filename: string;
-  user: Types.ObjectId;
+  user: string;
   url: string;
 }
 

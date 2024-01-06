@@ -1,8 +1,10 @@
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { FileModel, IFile } from '../models/filesModel';
-import {  SharedFileModel, ISharedFile } from '../models/sharedFilesModel'
+import { SharedFileModel, ISharedFile } from '../models/sharedFilesModel'
+import { Readable } from 'stream';
+import { HTTP_ERRORS, ERROR_MESSAGES } from '../config/errors';
 
 const s3 = new S3Client({
   region: 'us-east-2',
@@ -43,17 +45,20 @@ const createFile = async (filename: string, user: string, url: string): Promise<
     const file = new FileModel({
       filename,
       user,
-      url
+      url,
     });
 
     const savedFile = await file.save();
 
     return savedFile;
-  } catch (error) {
-    console.error('Error al guardar el archivo en la base de datos:', error);
+  } catch (error: any) {
+    if (error.name === 'MongoError' && error.code === 11000) {
+      throw new Error(ERROR_MESSAGES[HTTP_ERRORS.CONFLICT]);;
+    }
     throw error;
   }
 };
+
 
 const getFileById = async (fileId: string): Promise<IFile | null> => {
   try {
@@ -61,7 +66,6 @@ const getFileById = async (fileId: string): Promise<IFile | null> => {
 
     return file;
   } catch (error) {
-    console.error('Error al obtener el archivo por ID:', error);
     throw error;
   }
 };
@@ -71,30 +75,35 @@ const getFilesByUser = async (username: string): Promise<IFile[]> => {
     const files = await FileModel.find({ user: username });
     return files;
   } catch (error) {
-    console.error('Error al obtener archivos por usuario:', error);
     throw error;
   }
 };
 
-const deleteFileById = async (fileId: string): Promise<void> => {
+const deleteFileById = async (fileId: string, owner: string): Promise<void> => {
   try {
-    const file = await getFileById(fileId)
+    const file = await getFileById(fileId);
 
     if (!file) {
-      throw new Error('Archivo no encontrado');
+      throw new Error(ERROR_MESSAGES[HTTP_ERRORS.NOT_FOUND]);
+    }
+
+    if (file.user !== owner) {
+      throw new Error(ERROR_MESSAGES[HTTP_ERRORS.FORBIDDEN]);
     }
 
     await deleteObjectFromS3(file.filename);
+
     const deletedFile = await FileModel.findByIdAndDelete(fileId);
 
     if (!deletedFile) {
-      throw new Error('Archivo no encontrado');
+      throw new Error(ERROR_MESSAGES[HTTP_ERRORS.INTERNAL_SERVER_ERROR]);
     }
   } catch (error) {
-    console.error('Error al eliminar el archivo por ID:', error);
     throw error;
   }
 };
+
+
 
 const createSharedFile = async (fileId: string, owner: string, sharedWith: string): Promise<ISharedFile> => {
   try {
@@ -113,11 +122,69 @@ const createSharedFile = async (fileId: string, owner: string, sharedWith: strin
   }
 };
 
+const downloadFileFromS3 = async (key: string): Promise<Buffer> => {
+  try {
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: 'prex-challenge',
+      Key: key,
+    });
+
+    const { Body } = await s3.send(getObjectCommand);
+
+    if (Body instanceof Readable) {
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of Body) {
+        chunks.push(chunk);
+      }
+
+      return Buffer.concat(chunks);
+    }
+
+    throw new Error('The object body is not a Readable type');
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteSharedFile = async (fileId: string, user: string): Promise<void> => {
+  try {
+    const deletedFile = await SharedFileModel.deleteOne({ fileId, sharedWith: user });
+
+    if (deletedFile.deletedCount === 0) {
+      throw new Error('No shared file found to delete in s3');
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+const revokeAccess = async (fileId: string, owner: string, user: string): Promise<void> => {
+  try {
+    const file = await getFileById(fileId)
+
+    if (!file) {
+      throw new Error('Archivo no encontrado');
+    }
+
+    if (file.user !== owner) {
+      throw new Error('El usuario no tiene permiso para revocar acceso a este archivo');
+    }
+
+    await deleteSharedFile(fileId, user);
+
+  } catch (error) {
+    throw error;
+  }
+};
+
 export {
   upload,
   createFile,
   deleteFileById,
   getFilesByUser,
   getFileById,
-  createSharedFile
+  createSharedFile,
+  downloadFileFromS3,
+  revokeAccess
 };

@@ -1,40 +1,50 @@
 import { Request, Response } from 'express';
 import { registerUser, loginUser } from '../services/authService';
+import { HTTP_ERRORS, ERROR_MESSAGES } from '../config/errors';
+import { HTTP_CODES } from '../config/codes';
 
 
 const register = async (req: Request, res: Response) => {
-    try {
-      const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-      if (!username || !password) {
-        return res.status(400).json({ error: 'Se requieren nombre de usuario y contraseña.' });
-      }
-
-      const result = await registerUser(username, password);
-
-      res.status(201).json({ message: result });
-    } catch (error: any) {
-      console.error(error);
-      res.status(error.code).json({ error: error.message });
+    if (!username || !password) {
+      return res.status(HTTP_ERRORS.BAD_REQUEST).json({ error: { code: HTTP_ERRORS.BAD_REQUEST, message: 'User and password are required.' } });
     }
-  };
 
-  const login = async (req: Request, res: Response) => {
-    try {
-      const { username, password } = req.body;
+    const result = await registerUser(username, password);
 
-      if (!username || !password) {
-        return res.status(400).json({ error: 'Se requieren nombre de usuario y contraseña.' });
-      }
+    res.status(HTTP_CODES.CREATED).json({ message: result });
+  } catch (error: any) {
 
-      const result = await loginUser(username, password);
-
-      res.json({ message: result });
-    } catch (error: any) { // resolver error codes
-      console.error(error);
-      res.status(error.code).json({ error: error.message });
+    if (error.message === ERROR_MESSAGES[HTTP_ERRORS.CONFLICT]) {
+      res.status(HTTP_ERRORS.CONFLICT).json({ error: { code: HTTP_ERRORS.CONFLICT, message: ERROR_MESSAGES[HTTP_ERRORS.CONFLICT] } });
+    } else {
+      res.status(HTTP_ERRORS.INTERNAL_SERVER_ERROR).json({ error: { code: HTTP_ERRORS.INTERNAL_SERVER_ERROR, message: error.message } });
     }
-  };
+  }
+};
+
+const login = async (req: Request, res: Response) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(HTTP_ERRORS.BAD_REQUEST).json({ error: { code: HTTP_ERRORS.BAD_REQUEST, message: 'User and password are required.' } });
+    }
+
+    const result = await loginUser(username, password);
+
+    res.json({ message: result });
+  } catch (error: any) {
+
+    if (error.message === ERROR_MESSAGES[HTTP_ERRORS.UNAUTHORIZED]) {
+      res.status(HTTP_ERRORS.UNAUTHORIZED).json({ error: { code: HTTP_ERRORS.UNAUTHORIZED, message: ERROR_MESSAGES[HTTP_ERRORS.UNAUTHORIZED] } });
+    } else {
+      res.status(HTTP_ERRORS.INTERNAL_SERVER_ERROR).json({ error: { code: HTTP_ERRORS.INTERNAL_SERVER_ERROR, message: error.message } });
+    }
+  }
+};
 
 
 export {
