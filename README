@@ -66,12 +66,243 @@ username: Nombre de usuario.
 password: Contraseña del usuario (posiblemente cifrada).
 
 
+## Postman collection
+
+--- start --- 
+
+{
+	"info": {
+		"_postman_id": "d64cc260-1369-4b02-9201-bd902b81f390",
+		"name": "Prex",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "13040240"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"test\",\r\n    \"password\": \"password1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/auth/login"
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"test\",\r\n    \"password\": \"password1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/auth/login"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Files",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/files/"
+			},
+			"response": []
+		},
+		{
+			"name": "Upload",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/Documents/imagen.jpg"
+						}
+					]
+				},
+				"url": "http://localhost:8081/api/files/upload"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete file",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/files/{{id}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Share",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/files/share/{{id}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Revoke",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8081/api/files/revoke/{{id}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Download",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8081/api/files/download/{{id}}"
+			},
+			"response": []
+		}
+	]
+}
+
+--- end --- 
+
 
 ## Despliegue
 
-El despliegue se realiza mediante la construcción de una imagen Docker basada en Node.js.
+importante tener instalador docker.
+
+Variables de entorno:
+- Se deben cargar las variables de entorno en el archivo .env
+- Hay un .env-example, archivo de ejemplo del cual se pueden tomar los valores de las variables de entorno para test
 
 Dockerfile
 El Dockerfile está configurado para construir una imagen de Docker que ejecuta la aplicación Node.js. El proceso incluye la instalación de dependencias, la compilación del código TypeScript y la exposición del puerto 8081.
 
+Comandos para despliegue:
 
+1 - docker build -t prex .
+2 - docker run -p 8081:8081 prex
+
+
+En el caso de este proyecto no es necesario orquestar ningun servicio externo, se optó por utilizar Mongo Atlas para usar el servicio cloud de mongoDB. En caso de querer utilizar base de datos local podria agregarse el siguiente
+docker compose:
+
+```version: "3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: "mongodb://mongodb:27017/prex"
+
+  mongodb:
+    image: "mongo:latest"
+    ports:
+      - "27017:27017"
+
+```
