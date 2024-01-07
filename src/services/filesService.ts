@@ -2,7 +2,7 @@ import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { FileModel, IFile } from '../models/filesModel';
-import { SharedFileModel, ISharedFile } from '../models/sharedFilesModel'
+import { SharedFileModel, ISharedFile, FileQueriesResult } from '../models/sharedFilesModel'
 import { Readable } from 'stream';
 import { HTTP_ERRORS, ERROR_MESSAGES } from '../config/errors';
 
@@ -70,9 +70,16 @@ const getFileById = async (fileId: string): Promise<IFile | null> => {
   }
 };
 
-const getFilesByUser = async (username: string): Promise<IFile[]> => {
+const getFilesByUser = async (username: string): Promise<FileQueriesResult> => {
   try {
-    const files = await FileModel.find({ user: username });
+    const myFiles = await FileModel.find({ user: username });
+    const sharedWithMe = await SharedFileModel.find({ sharedWith: username })
+
+    const files = {
+      myFiles,
+      sharedWithMe
+    };
+
     return files;
   } catch (error) {
     throw error;

@@ -4,7 +4,7 @@ import { getUserFilesController, uploadController, deleteFileController, shareFi
 
 const filesRouter: Router = express.Router();
 
-filesRouter.post('/upload', upload.single('archivo'), uploadController);
+filesRouter.post('/upload', upload.single('file'), uploadController);
 filesRouter.get('/', getUserFilesController);
 filesRouter.delete('/:id', deleteFileController);
 filesRouter.post('/share/:id', shareFileController);

@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 connectToDatabase();
 
 app.use('/api/auth', authRouter);
-app.use('/api/files', auth ,filesRouter)
+app.use('/api/files', auth ,filesRouter);
 
 
 const server = app.listen(port, () => {

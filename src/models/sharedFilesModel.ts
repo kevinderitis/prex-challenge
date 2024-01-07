@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { IFile } from './filesModel';
 
 interface ISharedFile extends Document {
   fileId: string;
@@ -12,6 +13,10 @@ const SharedFileSchema: Schema = new Schema({
   sharedWith: { type: String, required: true },
 });
 
+interface FileQueriesResult {
+  myFiles: IFile[];
+  sharedWithMe: ISharedFile[];
+}
 const SharedFileModel = model<ISharedFile>('SharedFile', SharedFileSchema);
 
-export { SharedFileModel, ISharedFile };
+export { SharedFileModel, ISharedFile, FileQueriesResult };

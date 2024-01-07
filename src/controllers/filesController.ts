@@ -74,7 +74,7 @@ const deleteFileController = async (req: AuthenticatedRequest, res: Response) =>
 
 const shareFileController = async (req: AuthenticatedRequest, res: Response) => {
     const fileId = req.params.id;
-    const { sharedWith } = req.body;
+    const { username } = req.body;
     const owner = req.user.username;
 
     try {
@@ -88,13 +88,13 @@ const shareFileController = async (req: AuthenticatedRequest, res: Response) => 
             return res.status(HTTP_ERRORS.FORBIDDEN).json({ error: { code: HTTP_ERRORS.FORBIDDEN, message: ERROR_MESSAGES[HTTP_ERRORS.FORBIDDEN] } });
         }
 
-        const sharedWithUser = await getUserByUsername(sharedWith);
+        const sharedWithUser = await getUserByUsername(username);
 
         if (!sharedWithUser) {
             return res.status(HTTP_ERRORS.UNAUTHORIZED).json({ error: { code: HTTP_ERRORS.UNAUTHORIZED, message: 'User does not exists.' } });
         }
 
-        await createSharedFile(fileId, owner, sharedWith);
+        await createSharedFile(fileId, owner, username);
         return res.status(HTTP_CODES.OK).json({ message: 'File shared successfully.' });
     } catch (error: any) {
 

@@ -35,7 +35,7 @@ const login = async (req: Request, res: Response) => {
 
     const result = await loginUser(username, password);
 
-    res.json({ message: result });
+    res.json({ token: result });
   } catch (error: any) {
 
     if (error.message === ERROR_MESSAGES[HTTP_ERRORS.UNAUTHORIZED]) {
