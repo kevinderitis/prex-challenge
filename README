@@ -1,0 +1,77 @@
+# PREX-CHALLENGE
+
+Proyecto realizado como parte del challenge de Prex para puesto de desarrollador backend. Construcción de un sistema de intercambio de archivos en el lado del servidor utilizando Node.js + Express + TS + AWS S3.
+
+## Arquitectura del Proyecto
+
+Este proyecto sigue una arquitectura basada en capas para organizar y estructurar el código de manera clara y modular. Cada capa cumple una función específica, lo que facilita la comprensión, mantenimiento y escalabilidad de la aplicación.
+
+Componentes Principales:
+
+*Routers*:
+Manejan las solicitudes HTTP y dirigen el flujo hacia los controladores correspondientes.
+*Controladores*:
+Contienen la lógica de procesamiento de las solicitudes y dirigen las operaciones a los servicios relevantes.
+*Servicios*:
+Conectan con los datos y encapsulan la lógica de negocio. Son responsables de interactuar con la capa de datos y devolver resultados a los controladores.
+
+Se implementa una capa de validación para verificar y validar las entradas de las solicitudes.
+Se sigue un manejo consistente de errores con códigos de estado HTTP y mensajes claros para facilitar la identificación y corrección de problemas.
+
+Esta arquitectura proporciona una base sólida para el desarrollo de la aplicación, facilitando el crecimiento, la expansión y el mantenimiento continuo.
+
+PREX-CHALLANGE
+|-- src
+|   |-- config
+|   |-- controllers
+|   |-- middlewares
+|   |-- models
+|   |-- routes
+|   |-- services
+|   |-- index.ts
+|-- test
+|-- package.json
+|-- tsconfig.json
+|-- Dockerfile
+|-- jest.config.ts
+
+## Base de datos
+
+Esta aplicación utiliza MongoDB como base de datos NoSQL. La base de datos consta de tres tablas principales: Files, SharedFiles, y Users.
+
+Files: Almacena información sobre archivos, incluyendo su nombre, propietario, y URL de almacenamiento.
+
+SharedFiles: Registra las relaciones de archivos compartidos entre usuarios, especificando el propietario del archivo y con quién se ha compartido.
+
+Users: Contiene información de los usuarios, incluyendo sus nombres de usuario y contraseñas cifradas.
+
+*files*
+
+_id: Identificador único del archivo.
+filename: Nombre del archivo.
+user: Nombre de usuario asociado al archivo.
+url: URL del archivo en el almacenamiento.
+
+*sharedFiles*
+
+_id: Identificador único de la relación compartida.
+fileId: Identificador del archivo compartido.
+owner: Propietario del archivo compartido.
+sharedWith: Usuario con el que se comparte el archivo.
+
+*users*
+
+_id: Identificador único del usuario.
+username: Nombre de usuario.
+password: Contraseña del usuario (posiblemente cifrada).
+
+
+
+## Despliegue
+
+El despliegue se realiza mediante la construcción de una imagen Docker basada en Node.js.
+
+Dockerfile
+El Dockerfile está configurado para construir una imagen de Docker que ejecuta la aplicación Node.js. El proceso incluye la instalación de dependencias, la compilación del código TypeScript y la exposición del puerto 8081.
+
+

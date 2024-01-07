@@ -1,23 +1,24 @@
 import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
+import config from '../config/config';
 import { FileModel, IFile } from '../models/filesModel';
 import { SharedFileModel, ISharedFile, FileQueriesResult } from '../models/sharedFilesModel'
 import { Readable } from 'stream';
 import { HTTP_ERRORS, ERROR_MESSAGES } from '../config/errors';
 
 const s3 = new S3Client({
-  region: 'us-east-2',
+  region: config.AWS_REGION,
   credentials: {
-    accessKeyId: 'AKIA6ODU2W55O6VIFFMU',
-    secretAccessKey: '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',
+    accessKeyId: config.AWS_ACCESS_KEY,
+    secretAccessKey: config.AWS_SECRET_KEY,
   },
 });
 
 const upload = multer({
   storage: multerS3({
     s3: s3,
-    bucket: 'prex-challenge',
+    bucket: config.AWS_BUCKET,
     key: (req: any, file: any, cb: any) => {
       cb(null, Date.now().toString() + '-' + file.originalname);
     },
@@ -27,15 +28,13 @@ const upload = multer({
 const deleteObjectFromS3 = async (objectKey: string): Promise<void> => {
   try {
     const deleteParams = {
-      Bucket: 'prex-challenge',
+      Bucket: config.AWS_BUCKET,
       Key: objectKey,
     };
 
     await s3.send(new DeleteObjectCommand(deleteParams));
 
-    console.log(`Objeto eliminado correctamente: ${objectKey}`);
   } catch (error) {
-    console.error('Error al eliminar el objeto:', error);
     throw error;
   }
 };
@@ -124,7 +123,6 @@ const createSharedFile = async (fileId: string, owner: string, sharedWith: strin
 
     return sharedFile;
   } catch (error) {
-    console.error('Error al compartir archivo:', error);
     throw error;
   }
 };
@@ -132,7 +130,7 @@ const createSharedFile = async (fileId: string, owner: string, sharedWith: strin
 const downloadFileFromS3 = async (key: string): Promise<Buffer> => {
   try {
     const getObjectCommand = new GetObjectCommand({
-      Bucket: 'prex-challenge',
+      Bucket: config.AWS_BUCKET,
       Key: key,
     });
 
@@ -171,11 +169,11 @@ const revokeAccess = async (fileId: string, owner: string, user: string): Promis
     const file = await getFileById(fileId)
 
     if (!file) {
-      throw new Error('Archivo no encontrado');
+      throw new Error('File not found');
     }
 
     if (file.user !== owner) {
-      throw new Error('El usuario no tiene permiso para revocar acceso a este archivo');
+      throw new Error('User without permission');
     }
 
     await deleteSharedFile(fileId, user);
